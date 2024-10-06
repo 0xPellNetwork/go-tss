@@ -1,0 +1,87 @@
+version: '3'
+
+services:
+  tss0:
+    hostname: tss0
+    ports:
+      - 8080:8080
+      - 6668:6668
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    #image: registry.github.com/0xPellNetwork/go-tss
+    restart: unless-stopped
+    environment:
+      - PRIVKEY=${TSS_0}
+      - NET=testnet
+    command: /go/bin/start.bash
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.1
+
+  tss1:
+    hostname: tss1
+    ports:
+      - 8081:8080
+      - 6669:6668
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    #image: registry.github.com/0xPellNetwork/go-tss
+    restart: unless-stopped
+    environment:
+      - PRIVKEY=${TSS_1}
+      - NET=testnet
+    depends_on:
+      - tss0
+    command: /go/bin/start-tss.bash
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.2
+
+  tss2:
+    hostname: tss2
+    ports:
+      - 8082:8080
+      - 6667:6668
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    #image: registry.github.com/0xPellNetwork/go-tss
+    restart: unless-stopped
+    environment:
+      - PRIVKEY=${TSS_2}
+      - NET=testnet
+    depends_on:
+      - tss0
+    command: /go/bin/start-tss.bash
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.3
+  tss3:
+    hostname: tss3
+    ports:
+      - 8083:8080
+      - 6666:6668
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    #image: registry.github.com/0xPellNetwork/go-tss
+    restart: unless-stopped
+    environment:
+      - PRIVKEY=${TSS_3}
+      - NET=testnet
+    depends_on:
+      - tss0
+    command: /go/bin/start-tss.bash
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.4
+
+networks:
+  localnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.10.0/16
