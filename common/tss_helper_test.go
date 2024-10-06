@@ -7,15 +7,14 @@ import (
 	"math/big"
 	"path"
 
-	btss "github.com/bnb-chain/tss-lib/tss"
-	"github.com/cometbft/cometbft/crypto/secp256k1"
+	btss "github.com/binance-chain/tss-lib/tss"
 	sdk "github.com/cosmos/cosmos-sdk/types/bech32/legacybech32"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"github.com/0xpellnetwork/go-tss/blame"
+	"github.com/0xpellnetwork/go-tss/conversion"
+	"github.com/0xpellnetwork/go-tss/messages"
 	. "gopkg.in/check.v1"
-
-	"gitlab.com/thorchain/tss/go-tss/blame"
-	"gitlab.com/thorchain/tss/go-tss/conversion"
-	"gitlab.com/thorchain/tss/go-tss/messages"
 )
 
 type tssHelpSuite struct{}
@@ -136,8 +135,6 @@ func (t *tssHelpSuite) TestGetMsgRound(c *C) {
 		messages.KEYSIGN5,
 		messages.KEYSIGN6,
 		messages.KEYSIGN7,
-		messages.KEYSIGN8,
-		messages.KEYSIGN9,
 	}
 	mockParty := btss.NewPartyID("12", "22", big.NewInt(2))
 	j := 0

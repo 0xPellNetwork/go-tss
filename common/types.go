@@ -16,10 +16,3 @@ type TssConfig struct {
 	// enable the tss monitor
 	EnableMonitor bool
 }
-
-type Algo string
-
-const (
-	ECDSA Algo = "ecdsa"
-	EdDSA Algo = "eddsa"
-)

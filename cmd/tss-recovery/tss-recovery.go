@@ -7,8 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/bnb-chain/tss-lib/crypto/vss"
-	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/binance-chain/tss-lib/crypto/vss"
 	. "github.com/decred/dcrd/dcrec/secp256k1"
 )
 
@@ -41,7 +40,7 @@ func main() {
 		vssShares[i] = &share
 	}
 
-	tssPrivateKey, err := vssShares[:n].ReConstruct(btcec.S256())
+	tssPrivateKey, err := vssShares[:n].ReConstruct()
 	if err != nil {
 		fmt.Printf("error in tss verify")
 	}

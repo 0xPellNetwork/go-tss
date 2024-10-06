@@ -12,7 +12,7 @@ import (
 	mocknet "github.com/libp2p/go-libp2p/p2p/net/mock"
 	"github.com/stretchr/testify/assert"
 
-	"gitlab.com/thorchain/tss/go-tss/conversion"
+	"github.com/0xpellnetwork/go-tss/conversion"
 )
 
 func setupHostsLocally(t *testing.T, n int) []host.Host {
@@ -39,7 +39,7 @@ func setupHostsLocally(t *testing.T, n int) []host.Host {
 }
 
 func TestPartyCoordinator(t *testing.T) {
-	ApplyDeadline.Store(false)
+	ApplyDeadline = false
 	hosts := setupHostsLocally(t, 4)
 	var pcs []PartyCoordinator
 	var peers []string
@@ -79,7 +79,7 @@ func TestPartyCoordinator(t *testing.T) {
 }
 
 func TestPartyCoordinatorTimeOut(t *testing.T) {
-	ApplyDeadline.Store(false)
+	ApplyDeadline = false
 	timeout := time.Second
 	hosts := setupHosts(t, 4)
 	var pcs []*PartyCoordinator

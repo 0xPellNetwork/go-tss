@@ -5,41 +5,35 @@ import (
 	"sync"
 
 	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/rs/zerolog/log"
 
-	"gitlab.com/thorchain/tss/go-tss/messages"
+	"github.com/0xpellnetwork/go-tss/messages"
 )
 
-type peerStatus struct {
-	peersResponse  map[peer.ID]bool
-	peerStatusLock *sync.RWMutex
-	allPeers       []peer.ID
-	notify         chan bool
-	leaderResponse *messages.JoinPartyLeaderComm
-	leader         peer.ID
-	threshold      int
-	reqCount       int
+type PeerStatus struct {
+	peersResponse      map[peer.ID]bool
+	peerStatusLock     *sync.RWMutex
+	notify             chan bool
+	newFound           chan bool
+	leaderResponse     *messages.JoinPartyLeaderComm
+	leaderResponseLock *sync.RWMutex
+	leader             string
+	threshold          int
+	reqCount           int
 }
 
-func (ps *peerStatus) getLeaderResponse() *messages.JoinPartyLeaderComm {
-	ps.peerStatusLock.RLock()
-	defer ps.peerStatusLock.RUnlock()
+func (ps *PeerStatus) getLeaderResponse() *messages.JoinPartyLeaderComm {
+	ps.leaderResponseLock.RLock()
+	defer ps.leaderResponseLock.RUnlock()
 	return ps.leaderResponse
 }
 
-func (ps *peerStatus) setLeaderResponse(resp *messages.JoinPartyLeaderComm) {
-	ps.peerStatusLock.Lock()
-	defer ps.peerStatusLock.Unlock()
+func (ps *PeerStatus) setLeaderResponse(resp *messages.JoinPartyLeaderComm) {
+	ps.leaderResponseLock.Lock()
+	defer ps.leaderResponseLock.Unlock()
 	ps.leaderResponse = resp
 }
 
-func (ps *peerStatus) getLeader() peer.ID {
-	ps.peerStatusLock.RLock()
-	defer ps.peerStatusLock.RUnlock()
-	return ps.leader
-}
-
-func newPeerStatus(peerNodes []peer.ID, myPeerID, leaderID peer.ID, threshold int) *peerStatus {
+func NewPeerStatus(peerNodes []peer.ID, myPeerID peer.ID, leader string, threshold int) *PeerStatus {
 	dat := make(map[peer.ID]bool)
 	for _, el := range peerNodes {
 		if el == myPeerID {
@@ -47,30 +41,25 @@ func newPeerStatus(peerNodes []peer.ID, myPeerID, leaderID peer.ID, threshold in
 		}
 		dat[el] = false
 	}
-	peerStatus := &peerStatus{
-		peersResponse:  dat,
-		peerStatusLock: &sync.RWMutex{},
-		notify:         make(chan bool, len(peerNodes)),
-		allPeers:       peerNodes,
-		leader:         leaderID,
-		threshold:      threshold,
-		reqCount:       0,
+	peerStatus := &PeerStatus{
+		peersResponse:      dat,
+		peerStatusLock:     &sync.RWMutex{},
+		notify:             make(chan bool, len(peerNodes)),
+		newFound:           make(chan bool, len(peerNodes)),
+		leader:             leader,
+		threshold:          threshold,
+		reqCount:           0,
+		leaderResponseLock: &sync.RWMutex{},
 	}
 	return peerStatus
 }
 
-func (ps *peerStatus) getCoordinationStatus() bool {
+func (ps *PeerStatus) getCoordinationStatus() bool {
 	_, offline := ps.getPeersStatus()
 	return len(offline) == 0
 }
 
-func (ps *peerStatus) getAllPeers() []peer.ID {
-	ps.peerStatusLock.RLock()
-	defer ps.peerStatusLock.RUnlock()
-	return ps.allPeers
-}
-
-func (ps *peerStatus) getPeersStatus() ([]peer.ID, []peer.ID) {
+func (ps *PeerStatus) getPeersStatus() ([]peer.ID, []peer.ID) {
 	var online []peer.ID
 	var offline []peer.ID
 	ps.peerStatusLock.RLock()
@@ -86,7 +75,7 @@ func (ps *peerStatus) getPeersStatus() ([]peer.ID, []peer.ID) {
 	return online, offline
 }
 
-func (ps *peerStatus) updatePeer(peerNode peer.ID) (bool, error) {
+func (ps *PeerStatus) updatePeer(peerNode peer.ID) (bool, error) {
 	ps.peerStatusLock.Lock()
 	defer ps.peerStatusLock.Unlock()
 	val, ok := ps.peersResponse[peerNode]
@@ -109,7 +98,6 @@ func (ps *peerStatus) updatePeer(peerNode peer.ID) (bool, error) {
 	if !val {
 		ps.peersResponse[peerNode] = true
 		ps.reqCount++
-		log.Debug().Msgf("leader has %d out of %d participants", ps.reqCount, ps.threshold)
 		if ps.reqCount >= ps.threshold {
 			return true, nil
 		}

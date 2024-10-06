@@ -7,13 +7,13 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
+	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	tnet "github.com/libp2p/go-libp2p-testing/net"
 	"github.com/libp2p/go-libp2p/core/peer"
 	maddr "github.com/multiformats/go-multiaddr"
+	"github.com/0xpellnetwork/go-tss/conversion"
+	"github.com/0xpellnetwork/go-tss/p2p"
 	. "gopkg.in/check.v1"
-
-	"gitlab.com/thorchain/tss/go-tss/conversion"
 )
 
 type FileStateMgrTestSuite struct{}
@@ -23,6 +23,7 @@ var _ = Suite(&FileStateMgrTestSuite{})
 func TestPackage(t *testing.T) { TestingT(t) }
 
 func (s *FileStateMgrTestSuite) SetUpTest(c *C) {
+	_ = os.Setenv(keyFragmentSeed, "vSeb9Pw5GEAcZHVX1AgxPPWeyPLWTfWkGWNXeDKFO2zHoqDsRnVVoLE4fEIcO14d")
 	conversion.SetupBech32Prefix()
 }
 
@@ -47,7 +48,8 @@ func (s *FileStateMgrTestSuite) TestNewFileStateMgr(c *C) {
 
 func (s *FileStateMgrTestSuite) TestSaveLocalState(c *C) {
 	stateItem := KeygenLocalState{
-		PubKey: "wasdfasdfasdfasdfasdfasdf",
+		PubKey:    "wasdfasdfasdfasdfasdfasdf",
+		LocalData: keygen.NewLocalPartySaveData(5),
 		ParticipantKeys: []string{
 			"A", "B", "C",
 		},
@@ -74,7 +76,7 @@ func (s *FileStateMgrTestSuite) TestSaveLocalState(c *C) {
 }
 
 func (s *FileStateMgrTestSuite) TestSaveAddressBook(c *C) {
-	testAddresses := make(map[peer.ID][]maddr.Multiaddr)
+	testAddresses := make(map[peer.ID]p2p.AddrList)
 	var t *testing.T
 	id1 := tnet.RandIdentityOrFatal(t)
 	id2 := tnet.RandIdentityOrFatal(t)
@@ -83,7 +85,7 @@ func (s *FileStateMgrTestSuite) TestSaveAddressBook(c *C) {
 	c.Assert(err, IsNil)
 	peers := []peer.ID{id1.ID(), id2.ID(), id3.ID()}
 	for _, each := range peers {
-		testAddresses[each] = []maddr.Multiaddr{mockAddr}
+		testAddresses[each] = []p2p.Multiaddr{mockAddr}
 	}
 	folder := os.TempDir()
 	f := filepath.Join(folder, "test")
@@ -114,7 +116,7 @@ func (s *FileStateMgrTestSuite) TestEncryption(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(fsm, NotNil)
 
-	stateItem := KeygenLocalStateOld{
+	stateItem := KeygenLocalState{
 		PubKey:    "wasdfasdfasdfasdfasdfasdf",
 		LocalData: keygen.NewLocalPartySaveData(5),
 		ParticipantKeys: []string{

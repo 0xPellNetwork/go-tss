@@ -16,27 +16,18 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/libp2p/go-libp2p/core/peer"
 	maddr "github.com/multiformats/go-multiaddr"
 
-	"github.com/bnb-chain/tss-lib/ecdsa/keygen"
-	"gitlab.com/thorchain/tss/go-tss/conversion"
+	"github.com/0xpellnetwork/go-tss/conversion"
+	"github.com/0xpellnetwork/go-tss/p2p"
 )
 
 const keyFragmentSeed = "TSS_FRAGMENT_SEED"
 
-type LocalPartySaveData interface {
-}
-
 // KeygenLocalState is a structure used to represent the data we saved locally for different keygen
 type KeygenLocalState struct {
-	PubKey          string   `json:"pub_key"`
-	LocalData       []byte   `json:"local_data"`
-	ParticipantKeys []string `json:"participant_keys"` // the paticipant of last key gen
-	LocalPartyKey   string   `json:"local_party_key"`
-}
-
-type KeygenLocalStateOld struct {
 	PubKey          string                    `json:"pub_key"`
 	LocalData       keygen.LocalPartySaveData `json:"local_data"`
 	ParticipantKeys []string                  `json:"participant_keys"` // the paticipant of last key gen
@@ -48,8 +39,8 @@ type KeygenLocalStateOld struct {
 type LocalStateManager interface {
 	SaveLocalState(state KeygenLocalState) error
 	GetLocalState(pubKey string) (KeygenLocalState, error)
-	SaveAddressBook(addressBook map[peer.ID][]maddr.Multiaddr) error
-	RetrieveP2PAddresses() ([]maddr.Multiaddr, error)
+	SaveAddressBook(addressBook map[peer.ID]p2p.AddrList) error
+	RetrieveP2PAddresses() (p2p.AddrList, error)
 }
 
 // FileStateMgr save the local state to file
@@ -58,7 +49,7 @@ type FileStateMgr struct {
 	writeLock   *sync.RWMutex
 	encryptMode bool
 	passkey     []byte
-	keyGenState map[string]*KeygenLocalState
+	keyGen      *KeygenLocalState
 }
 
 // NewFileStateMgr create a new instance of the FileStateMgr which implements LocalStateManager
@@ -81,7 +72,7 @@ func NewFileStateMgr(folder string, password string) (*FileStateMgr, error) {
 		writeLock:   &sync.RWMutex{},
 		encryptMode: encryptMode,
 		passkey:     key,
-		keyGenState: map[string]*KeygenLocalState{},
+		keyGen:      nil,
 	}, nil
 }
 
@@ -120,14 +111,11 @@ func (fsm *FileStateMgr) SaveLocalState(state KeygenLocalState) error {
 
 // GetLocalState read the local state from file system
 func (fsm *FileStateMgr) GetLocalState(pubKey string) (KeygenLocalState, error) {
+	if fsm.keyGen != nil {
+		return *fsm.keyGen, nil
+	}
 	if len(pubKey) == 0 {
 		return KeygenLocalState{}, errors.New("pub key is empty")
-	}
-	fsm.writeLock.RLock()
-	val, ok := fsm.keyGenState[pubKey]
-	fsm.writeLock.RUnlock()
-	if ok {
-		return *val, nil
 	}
 	filePathName, err := fsm.getFilePathName(pubKey)
 	if err != nil {
@@ -148,28 +136,13 @@ func (fsm *FileStateMgr) GetLocalState(pubKey string) (KeygenLocalState, error) 
 	}
 	var localState KeygenLocalState
 	if err := json.Unmarshal(pt, &localState); nil != err {
-		// try unmarshalling with the old format
-		var localStateOld KeygenLocalStateOld
-		if err := json.Unmarshal(pt, &localStateOld); nil != err {
-			return KeygenLocalState{}, fmt.Errorf("fail to unmarshal KeygenLocalState with backwards compatibility: %w", err)
-		}
-
-		localState.PubKey = localStateOld.PubKey
-		localState.ParticipantKeys = localStateOld.ParticipantKeys
-		localState.LocalPartyKey = localStateOld.LocalPartyKey
-		localState.LocalData, err = json.Marshal(localStateOld.LocalData)
-
-		if err != nil {
-			return KeygenLocalState{}, fmt.Errorf("fail to marshal KeygenLocalState.LocalData for backwards compatibility: %w", err)
-		}
+		return KeygenLocalState{}, fmt.Errorf("fail to unmarshal KeygenLocalState:%x %w", pt, err)
 	}
-	fsm.writeLock.Lock()
-	defer fsm.writeLock.Unlock()
-	fsm.keyGenState[pubKey] = &localState
+	fsm.keyGen = &localState
 	return localState, nil
 }
 
-func (fsm *FileStateMgr) SaveAddressBook(address map[peer.ID][]maddr.Multiaddr) error {
+func (fsm *FileStateMgr) SaveAddressBook(address map[peer.ID]p2p.AddrList) error {
 	if len(fsm.folder) < 1 {
 		return errors.New("base file path is invalid")
 	}
@@ -194,7 +167,7 @@ func (fsm *FileStateMgr) SaveAddressBook(address map[peer.ID][]maddr.Multiaddr) 
 	return ioutil.WriteFile(filePathName, buf.Bytes(), 0o600)
 }
 
-func (fsm *FileStateMgr) RetrieveP2PAddresses() ([]maddr.Multiaddr, error) {
+func (fsm *FileStateMgr) RetrieveP2PAddresses() (p2p.AddrList, error) {
 	if len(fsm.folder) < 1 {
 		return nil, errors.New("base file path is invalid")
 	}
@@ -213,7 +186,7 @@ func (fsm *FileStateMgr) RetrieveP2PAddresses() ([]maddr.Multiaddr, error) {
 	}
 	fsm.writeLock.RUnlock()
 	data := strings.Split(string(input), "\n")
-	var peerAddresses []maddr.Multiaddr
+	var peerAddresses []p2p.Multiaddr
 	for _, el := range data {
 		// we skip the empty entry
 		if len(el) == 0 {

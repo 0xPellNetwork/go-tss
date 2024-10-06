@@ -9,15 +9,15 @@ import (
 	"sync/atomic"
 	"time"
 
-	libp2p "github.com/libp2p/go-libp2p"
+	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/protocol"
-	discovery_routing "github.com/libp2p/go-libp2p/p2p/discovery/routing"
-	discovery_util "github.com/libp2p/go-libp2p/p2p/discovery/util"
+	"github.com/libp2p/go-libp2p/p2p/discovery/routing"
+	discoveryutil "github.com/libp2p/go-libp2p/p2p/discovery/util"
 	rcmgr "github.com/libp2p/go-libp2p/p2p/host/resource-manager"
 	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
 	"github.com/libp2p/go-libp2p/p2p/protocol/ping"
@@ -25,7 +25,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"gitlab.com/thorchain/tss/go-tss/messages"
+	"github.com/0xpellnetwork/go-tss/messages"
 )
 
 var (
@@ -50,9 +50,9 @@ type Message struct {
 // Communication use p2p to broadcast messages among all the TSS nodes
 type Communication struct {
 	rendezvous       string // based on group
-	bootstrapPeers   []maddr.Multiaddr
+	bootstrapPeers   []Multiaddr
 	logger           zerolog.Logger
-	listenAddr       maddr.Multiaddr
+	listenAddr       Multiaddr
 	host             host.Host
 	wg               *sync.WaitGroup
 	stopChan         chan struct{} // channel to indicate whether we should stop
@@ -60,17 +60,17 @@ type Communication struct {
 	subscriberLocker *sync.Mutex
 	streamCount      int64
 	BroadcastMsgChan chan *messages.BroadcastMsgChan
-	externalAddr     maddr.Multiaddr
+	externalAddr     Multiaddr
 	streamMgr        *StreamMgr
 }
 
 // NewCommunication create a new instance of Communication
-func NewCommunication(rendezvous string, bootstrapPeers []maddr.Multiaddr, port int, externalIP string) (*Communication, error) {
+func NewCommunication(rendezvous string, bootstrapPeers []Multiaddr, port int, externalIP string) (*Communication, error) {
 	addr, err := maddr.NewMultiaddr(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port))
 	if err != nil {
 		return nil, fmt.Errorf("fail to create listen addr: %w", err)
 	}
-	var externalAddr maddr.Multiaddr = nil
+	var externalAddr Multiaddr = nil
 	if len(externalIP) != 0 {
 		externalAddr, err = maddr.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d", externalIP, port))
 		if err != nil {
@@ -183,7 +183,7 @@ func (c *Communication) readFromStream(stream network.Stream) {
 		c.streamMgr.AddStream(wrappedMsg.MsgID, stream)
 		select {
 		case <-time.After(10 * time.Second):
-			c.logger.Warn().Msgf("timeout to send message to channel: protocol ID: %s, msg type %s,  peer ID %s", stream.Protocol(), wrappedMsg.MessageType.String(), peerID)
+			c.logger.Warn().Msgf("XXXX: timeout to send message to channel: protocol ID: %s, msg type %s,  peer ID %s", stream.Protocol(), wrappedMsg.MessageType.String(), peerID)
 		case channel <- &Message{
 			PeerID:  stream.Conn().RemotePeer(),
 			Payload: dataBuf}:
@@ -251,13 +251,12 @@ func (c *Communication) startChannel(privKeyBytes []byte) error {
 		return err
 	}
 
-	addressFactory := func(addrs []maddr.Multiaddr) []maddr.Multiaddr {
+	addressFactory := func(addrs []Multiaddr) []Multiaddr {
 		if c.externalAddr != nil {
-			return []maddr.Multiaddr{c.externalAddr}
+			return []Multiaddr{c.externalAddr}
 		}
 		return addrs
 	}
-
 	scalingLimits := rcmgr.DefaultLimits
 	protocolPeerBaseLimit := rcmgr.BaseLimit{
 		Streams:         4096,
@@ -296,7 +295,8 @@ func (c *Communication) startChannel(privKeyBytes []byte) error {
 		return err
 	}
 
-	h, err := libp2p.New(libp2p.ListenAddrs([]maddr.Multiaddr{c.listenAddr}...),
+	h, err := libp2p.New(
+		libp2p.ListenAddrs([]Multiaddr{c.listenAddr}...),
 		libp2p.Identity(p2pPriKey),
 		libp2p.AddrsFactory(addressFactory),
 		libp2p.ResourceManager(m),
@@ -336,8 +336,8 @@ func (c *Communication) startChannel(privKeyBytes []byte) error {
 
 	// We use a rendezvous point "meet me here" to announce our location.
 	// This is like telling your friends to meet you at the Eiffel Tower.
-	routingDiscovery := discovery_routing.NewRoutingDiscovery(kademliaDHT)
-	discovery_util.Advertise(ctx, routingDiscovery, c.rendezvous)
+	routingDiscovery := routing.NewRoutingDiscovery(kademliaDHT)
+	discoveryutil.Advertise(ctx, routingDiscovery, c.rendezvous)
 	err = c.bootStrapConnectivityCheck()
 	if err != nil {
 		return err

@@ -4,8 +4,8 @@ import (
 	"sort"
 	"testing"
 
-	tnet "github.com/libp2p/go-libp2p-testing/net"
 	"github.com/libp2p/go-libp2p/core/peer"
+	tnet "github.com/libp2p/go-libp2p-testing/net"
 	. "gopkg.in/check.v1"
 )
 
@@ -37,7 +37,7 @@ func (s *PeerStatusTestSuite) TestPeerStatus(c *C) {
 	peers := generateRandomPeers(c, 5)
 	sortPeers(peers)
 
-	peerStatus := newPeerStatus(peers, peers[0], peers[0], 2)
+	peerStatus := NewPeerStatus(peers, peers[0], peers[0].String(), 2)
 
 	ret, err := peerStatus.updatePeer(peers[2])
 	c.Assert(err, IsNil)

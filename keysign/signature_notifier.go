@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bnb-chain/tss-lib/common"
-	tsslibcommon "github.com/bnb-chain/tss-lib/common"
+	"github.com/binance-chain/tss-lib/common"
+	tsslibcommon "github.com/binance-chain/tss-lib/common"
 	"github.com/golang/protobuf/proto"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
@@ -16,8 +16,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"gitlab.com/thorchain/tss/go-tss/messages"
-	"gitlab.com/thorchain/tss/go-tss/p2p"
+	"github.com/0xpellnetwork/go-tss/messages"
+	"github.com/0xpellnetwork/go-tss/p2p"
 )
 
 var signatureNotifierProtocol protocol.ID = "/p2p/signatureNotifier"
@@ -25,78 +25,31 @@ var signatureNotifierProtocol protocol.ID = "/p2p/signatureNotifier"
 type signatureItem struct {
 	messageID     string
 	peerID        peer.ID
-	signatureData []*common.SignatureData
+	signatureData []*common.ECSignature
 }
 
 // SignatureNotifier is design to notify the
 type SignatureNotifier struct {
-	ctx       context.Context
-	cancel    context.CancelFunc
-	startOnce sync.Once
-
 	logger       zerolog.Logger
 	host         host.Host
 	notifierLock *sync.Mutex
-	notifiers    map[string]*notifier
+	notifiers    map[string]*Notifier
+	messages     chan *signatureItem
 	streamMgr    *p2p.StreamMgr
 }
 
 // NewSignatureNotifier create a new instance of SignatureNotifier
 func NewSignatureNotifier(host host.Host) *SignatureNotifier {
-	ctx, cancel := context.WithCancel(context.Background())
 	s := &SignatureNotifier{
-		ctx:          ctx,
-		cancel:       cancel,
 		logger:       log.With().Str("module", "signature_notifier").Logger(),
 		host:         host,
 		notifierLock: &sync.Mutex{},
-		notifiers:    make(map[string]*notifier),
+		notifiers:    make(map[string]*Notifier),
+		messages:     make(chan *signatureItem),
 		streamMgr:    p2p.NewStreamMgr(),
 	}
 	host.SetStreamHandler(signatureNotifierProtocol, s.handleStream)
 	return s
-}
-
-// Start launches a background cleanup goroutine
-func (s *SignatureNotifier) Start() {
-	s.startOnce.Do(func() {
-		go s.cleanupStaleNotifiers()
-	})
-}
-
-// Stop stops the background cleanup goroutine
-func (s *SignatureNotifier) Stop() {
-	s.cancel()
-}
-
-// cleanupStaleNotifiers will periodically check any active notifiers to see if they've been around
-// for longer than notifierTTL. This was added because we allow broadcasts to create notifier objects
-// in handleStream, and need a way to cleanup notifiers that went unused
-func (s *SignatureNotifier) cleanupStaleNotifiers() {
-	doCleanup := func() {
-		s.notifierLock.Lock()
-		for messageID, notifier := range s.notifiers {
-			if time.Since(notifier.lastUpdated) > notifier.ttl {
-				delete(s.notifiers, messageID)
-			}
-		}
-		s.notifierLock.Unlock()
-	}
-	ticker := time.NewTicker(time.Second * 15)
-	defer ticker.Stop()
-
-	// quickly do an initial cleanup instead of waiting for the ticker. this aids
-	// in testing so we don't have to wait for the ticker to fire
-	doCleanup()
-
-	for {
-		select {
-		case <-s.ctx.Done():
-			return
-		case <-ticker.C:
-			doCleanup()
-		}
-	}
 }
 
 // HandleStream handle signature notify stream
@@ -121,22 +74,34 @@ func (s *SignatureNotifier) handleStream(stream network.Stream) {
 		s.streamMgr.AddStream("UNKNOWN", stream)
 		return
 	}
-	s.streamMgr.AddStream(msg.ID, stream)
-	var signatures []*common.SignatureData
+	var signatures []*common.ECSignature
 	if len(msg.Signatures) > 0 && msg.KeysignStatus == messages.KeysignSignature_Success {
 		for _, el := range msg.Signatures {
-			var signature common.SignatureData
+			var signature common.ECSignature
 			if err := proto.Unmarshal(el, &signature); err != nil {
 				logger.Error().Err(err).Msg("fail to unmarshal signature data")
 				return
 			}
 			signatures = append(signatures, &signature)
 		}
+	}
+	s.notifierLock.Lock()
+	defer s.notifierLock.Unlock()
+	n, ok := s.notifiers[msg.ID]
+	if !ok {
+		logger.Debug().Msgf("notifier for message id(%s) not exist", msg.ID)
+		_ = stream.Reset()
+		return
+	}
+	s.streamMgr.AddStream(msg.ID, stream)
 
-		_, err = s.createOrUpdateNotifier(msg.ID, nil, "", signatures, defaultNotifierTTL)
-		if err != nil {
-			s.logger.Error().Err(err).Msg("fail to update notifier")
-		}
+	finished, err := n.ProcessSignature(signatures)
+	if err != nil {
+		logger.Error().Err(err).Msg("fail to verify local signature data")
+		return
+	}
+	if finished {
+		delete(s.notifiers, msg.ID)
 	}
 }
 
@@ -186,11 +151,11 @@ func (s *SignatureNotifier) sendOneMsgToPeer(m *signatureItem) error {
 }
 
 // BroadcastSignature sending the keysign signature to all other peers
-func (s *SignatureNotifier) BroadcastSignature(messageID string, sig []*tsslibcommon.SignatureData, peers []peer.ID) error {
+func (s *SignatureNotifier) BroadcastSignature(messageID string, sig []*tsslibcommon.ECSignature, peers []peer.ID) error {
 	return s.broadcastCommon(messageID, sig, peers)
 }
 
-func (s *SignatureNotifier) broadcastCommon(messageID string, sig []*tsslibcommon.SignatureData, peers []peer.ID) error {
+func (s *SignatureNotifier) broadcastCommon(messageID string, sig []*tsslibcommon.ECSignature, peers []peer.ID) error {
 	wg := sync.WaitGroup{}
 	for _, p := range peers {
 		if p == s.host.ID() {
@@ -220,67 +185,33 @@ func (s *SignatureNotifier) BroadcastFailed(messageID string, peers []peer.ID) e
 	return s.broadcastCommon(messageID, nil, peers)
 }
 
-func (s *SignatureNotifier) removeNotifier(n *notifier) {
+func (s *SignatureNotifier) addToNotifiers(n *Notifier) {
 	s.notifierLock.Lock()
 	defer s.notifierLock.Unlock()
-	delete(s.notifiers, n.messageID)
+	s.notifiers[n.MessageID] = n
 }
 
-// createOrUpdateNotifier will create a new notifier object for the provided messageID if one does
-// not exist, or retrieve one that has already been created. it will also update any unset
-// messages/poolPubKey/signatures to provided values that are not empty/nil. this is to allow incremental
-// assembly of the required components in *any order*. for example, we could received a broadcast of
-// signatures from another peer before our node begins to wait for signatures. in this case, we should
-// hold on to the signatures until this node enters WaitForSignatures. alternatively, we may begin to
-// WaitForSignature first, in which case we should wait for signatures via broadcast. once all components
-// are set (see readyToProcess()), we can process the signature
-func (s *SignatureNotifier) createOrUpdateNotifier(messageID string, messages [][]byte, poolPubKey string, signatures []*tsslibcommon.SignatureData, timeout time.Duration) (*notifier, error) {
+func (s *SignatureNotifier) removeNotifier(n *Notifier) {
 	s.notifierLock.Lock()
 	defer s.notifierLock.Unlock()
-	n, ok := s.notifiers[messageID]
-	if !ok {
-		var err error
-		n, err = newNotifier(messageID, messages, poolPubKey, signatures)
-		if err != nil {
-			return nil, err
-		}
-		s.notifiers[messageID] = n
-	}
-	n.ttl = timeout
-
-	// update any fields that were not set previously
-	n.updateUnset(messages, poolPubKey, signatures)
-
-	if n.readyToProcess() {
-		err := n.processSignature(n.signatures)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return n, nil
+	delete(s.notifiers, n.MessageID)
 }
 
 // WaitForSignature wait until keysign finished and signature is available
-func (s *SignatureNotifier) WaitForSignature(messageID string, message [][]byte, poolPubKey string, timeout time.Duration, sigChan chan string) ([]*tsslibcommon.SignatureData, error) {
-	s.logger.Debug().Msg("waiting for signature")
-	n, err := s.createOrUpdateNotifier(messageID, message, poolPubKey, nil, timeout+time.Second)
+func (s *SignatureNotifier) WaitForSignature(messageID string, message [][]byte, poolPubKey string, timeout time.Duration, sigChan chan string) ([]*common.ECSignature, error) {
+	n, err := NewNotifier(messageID, message, poolPubKey)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create or update notifier: %v", err)
+		return nil, fmt.Errorf("fail to create notifier")
 	}
-
-	// only remove the notifier here, where it is ultimately consumed regardless
-	// of where it was created
+	s.addToNotifiers(n)
 	defer s.removeNotifier(n)
 
 	select {
-	case d := <-n.getResponseChannel():
-		s.logger.Debug().Msg("got signature from peer")
+	case d := <-n.GetResponseChannel():
 		return d, nil
 	case <-time.After(timeout):
-		s.logger.Debug().Msg("timed out waiting for signature from peer")
 		return nil, fmt.Errorf("timeout: didn't receive signature after %s", timeout)
 	case <-sigChan:
-		s.logger.Debug().Msg("got signature generated signal")
 		return nil, p2p.ErrSigGenerated
 	}
 }

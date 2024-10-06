@@ -12,11 +12,12 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/input"
 	golog "github.com/ipfs/go-log"
+	"gitlab.com/thorchain/binance-sdk/common/types"
 
-	"gitlab.com/thorchain/tss/go-tss/common"
-	"gitlab.com/thorchain/tss/go-tss/conversion"
-	"gitlab.com/thorchain/tss/go-tss/p2p"
-	"gitlab.com/thorchain/tss/go-tss/tss"
+	"github.com/0xpellnetwork/go-tss/common"
+	"github.com/0xpellnetwork/go-tss/conversion"
+	"github.com/0xpellnetwork/go-tss/p2p"
+	"github.com/0xpellnetwork/go-tss/tss"
 )
 
 var (
@@ -41,6 +42,10 @@ func main() {
 
 	// Setup Bech32 Prefixes
 	conversion.SetupBech32Prefix()
+	// this is only need for the binance library
+	if os.Getenv("NET") == "testnet" || os.Getenv("NET") == "mocknet" {
+		types.Network = types.TestNetwork
+	}
 	// Read stdin for the private key
 	inBuf := bufio.NewReader(os.Stdin)
 	priKeyBytes, err := input.GetPassword("input node secret key:", inBuf)
@@ -54,7 +59,7 @@ func main() {
 	}
 	// init tss module
 	tss, err := tss.NewTss(
-		p2pConf.BootstrapPeers,
+		p2p.AddrList(p2pConf.BootstrapPeers),
 		p2pConf.Port,
 		priKey,
 		p2pConf.RendezvousString,
@@ -62,7 +67,6 @@ func main() {
 		tssConf,
 		nil,
 		p2pConf.ExternalIP,
-		os.Getenv("PASSWORD"),
 	)
 	if nil != err {
 		log.Fatal(err)

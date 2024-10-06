@@ -16,23 +16,20 @@ import (
 
 const (
 	LengthHeader        = 4 // LengthHeader represent how many bytes we used as header
-	TimeoutReadPayload  = time.Second * 20
-	TimeoutWritePayload = time.Second * 20
+	TimeoutReadPayload  = time.Second * 10
+	TimeoutWritePayload = time.Second * 10
 	MaxPayload          = 20000000 // 20M
 )
 
 // applyDeadline will be true , and only disable it when we are doing test
 // the reason being the p2p network , mocknet, mock stream doesn't support SetReadDeadline ,SetWriteDeadline feature
-var ApplyDeadline = &atomic.Bool{}
-
-func init() {
-	ApplyDeadline.Store(true)
-}
+var ApplyDeadline = true
 
 type StreamMgr struct {
 	unusedStreams map[string][]network.Stream
 	streamLocker  *sync.RWMutex
 	logger        zerolog.Logger
+	numStream     atomic.Int64
 }
 
 func NewStreamMgr() *StreamMgr {
@@ -47,20 +44,24 @@ func (sm *StreamMgr) ReleaseStream(msgID string) {
 	sm.streamLocker.RLock()
 	usedStreams, okStream := sm.unusedStreams[msgID]
 	unknownStreams, okUnknown := sm.unusedStreams["UNKNOWN"]
-	streams := append(usedStreams, unknownStreams...)
 	sm.streamLocker.RUnlock()
+	streams := append(usedStreams, unknownStreams...)
+	cnt := int64(0)
 	if okStream || okUnknown {
 		for _, el := range streams {
 			err := el.Reset()
 			if err != nil {
 				sm.logger.Error().Err(err).Msg("fail to reset the stream,skip it")
 			}
+			cnt++
 		}
 		sm.streamLocker.Lock()
 		delete(sm.unusedStreams, msgID)
 		delete(sm.unusedStreams, "UNKNOWN")
 		sm.streamLocker.Unlock()
+		sm.numStream.Add(-cnt)
 	}
+	//sm.logger.Info().Msgf("release stream, msgID: %s, numStream: %d, Unknown streams: %d, total: %d", msgID, len(streams), unknownStreams, sm.numStream.Load())
 }
 
 func (sm *StreamMgr) AddStream(msgID string, stream network.Stream) {
@@ -77,11 +78,13 @@ func (sm *StreamMgr) AddStream(msgID string, stream network.Stream) {
 		entries = append(entries, stream)
 		sm.unusedStreams[msgID] = entries
 	}
+	sm.numStream.Add(1)
+	//sm.logger.Info().Msgf("add stream, msgID: %s, numStream: %d, total: %d", msgID, len(entries), sm.numStream.Load())
 }
 
 // ReadStreamWithBuffer read data from the given stream
 func ReadStreamWithBuffer(stream network.Stream) ([]byte, error) {
-	if ApplyDeadline.Load() {
+	if ApplyDeadline {
 		if err := stream.SetReadDeadline(time.Now().Add(TimeoutReadPayload)); nil != err {
 			if errReset := stream.Reset(); errReset != nil {
 				return nil, errReset
@@ -112,7 +115,7 @@ func WriteStreamWithBuffer(msg []byte, stream network.Stream) error {
 	length := uint32(len(msg))
 	lengthBytes := make([]byte, LengthHeader)
 	binary.LittleEndian.PutUint32(lengthBytes, length)
-	if ApplyDeadline.Load() {
+	if ApplyDeadline {
 		if err := stream.SetWriteDeadline(time.Now().Add(TimeoutWritePayload)); nil != err {
 			if errReset := stream.Reset(); errReset != nil {
 				return errReset
