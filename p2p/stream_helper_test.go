@@ -97,7 +97,7 @@ func (m MockNetworkStream) Conn() network.Conn {
 }
 
 func (m MockNetworkStream) Scope() network.StreamScope {
-	return nil
+	return &network.NullScope{}
 }
 
 func TestReadLength(t *testing.T) {
@@ -163,7 +163,7 @@ func TestReadLength(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		ApplyDeadline = true
+		ApplyDeadline.Store(true)
 		t.Run(tc.name, func(st *testing.T) {
 			stream := tc.streamProvider()
 			l, err := ReadStreamWithBuffer(stream)
@@ -207,7 +207,7 @@ func TestReadPayload(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		ApplyDeadline = true
+		ApplyDeadline.Store(true)
 		t.Run(tc.name, func(st *testing.T) {
 			stream := tc.streamProvider()
 			l, err := ReadStreamWithBuffer(stream)
