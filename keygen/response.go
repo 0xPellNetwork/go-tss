@@ -1,12 +1,13 @@
 package keygen
 
 import (
-	"github.com/0xpellnetwork/go-tss/blame"
-	"github.com/0xpellnetwork/go-tss/common"
+	"gitlab.com/thorchain/tss/go-tss/blame"
+	"gitlab.com/thorchain/tss/go-tss/common"
 )
 
 // Response keygen response
 type Response struct {
+	Algo        common.Algo   `json:"algo"`
 	PubKey      string        `json:"pub_key"`
 	PoolAddress string        `json:"pool_address"`
 	Status      common.Status `json:"status"`
@@ -14,8 +15,9 @@ type Response struct {
 }
 
 // NewResponse create a new instance of keygen.Response
-func NewResponse(pk, addr string, status common.Status, blame blame.Blame) Response {
+func NewResponse(algo common.Algo, pk, addr string, status common.Status, blame blame.Blame) Response {
 	return Response{
+		Algo:        algo,
 		PubKey:      pk,
 		PoolAddress: addr,
 		Status:      status,

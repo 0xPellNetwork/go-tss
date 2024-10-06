@@ -7,22 +7,23 @@ import (
 	"strings"
 	"sync"
 
-	bkeygen "github.com/binance-chain/tss-lib/ecdsa/keygen"
+	bkeygen "github.com/bnb-chain/tss-lib/ecdsa/keygen"
+	tcrypto "github.com/cometbft/cometbft/crypto"
 	coskey "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types/bech32/legacybech32"
 	"github.com/libp2p/go-libp2p/core/peer"
+	maddr "github.com/multiformats/go-multiaddr"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	tcrypto "github.com/tendermint/tendermint/crypto"
 
-	"github.com/0xpellnetwork/go-tss/common"
-	"github.com/0xpellnetwork/go-tss/conversion"
-	"github.com/0xpellnetwork/go-tss/keygen"
-	"github.com/0xpellnetwork/go-tss/keysign"
-	"github.com/0xpellnetwork/go-tss/messages"
-	"github.com/0xpellnetwork/go-tss/monitor"
-	"github.com/0xpellnetwork/go-tss/p2p"
-	"github.com/0xpellnetwork/go-tss/storage"
+	"gitlab.com/thorchain/tss/go-tss/common"
+	"gitlab.com/thorchain/tss/go-tss/conversion"
+	"gitlab.com/thorchain/tss/go-tss/keygen"
+	"gitlab.com/thorchain/tss/go-tss/keysign"
+	"gitlab.com/thorchain/tss/go-tss/messages"
+	"gitlab.com/thorchain/tss/go-tss/monitor"
+	"gitlab.com/thorchain/tss/go-tss/p2p"
+	"gitlab.com/thorchain/tss/go-tss/storage"
 )
 
 // TssServer is the structure that can provide all keysign and key gen features
@@ -34,6 +35,7 @@ type TssServer struct {
 	preParams         *bkeygen.LocalPreParams
 	tssKeyGenLocker   *sync.Mutex
 	stopChan          chan struct{}
+	joinPartyChan     chan struct{}
 	partyCoordinator  *p2p.PartyCoordinator
 	stateManager      storage.LocalStateManager
 	signatureNotifier *keysign.SignatureNotifier
@@ -41,9 +43,14 @@ type TssServer struct {
 	tssMetrics        *monitor.Metric
 }
 
+type PeerInfo struct {
+	ID      string
+	Address string
+}
+
 // NewTss create a new instance of Tss
 func NewTss(
-	cmdBootstrapPeers p2p.AddrList,
+	cmdBootstrapPeers []maddr.Multiaddr,
 	p2pPort int,
 	priKey tcrypto.PrivKey,
 	rendezvous,
@@ -67,7 +74,7 @@ func NewTss(
 		return nil, fmt.Errorf("fail to create file state manager")
 	}
 
-	var bootstrapPeers p2p.AddrList
+	var bootstrapPeers []maddr.Multiaddr
 	savedPeers, err := stateManager.RetrieveP2PAddresses()
 	if err != nil {
 		bootstrapPeers = cmdBootstrapPeers
@@ -102,9 +109,8 @@ func NewTss(
 		return nil, fmt.Errorf("fail to start p2p network: %w", err)
 	}
 	pc := p2p.NewPartyCoordinator(comm.GetHost(), conf.PartyTimeout)
-	//pc.StartDiagnostic() //***** Enable if diagnostics are needed
-
 	sn := keysign.NewSignatureNotifier(comm.GetHost())
+	sn.Start()
 	metrics := monitor.NewMetric()
 	if conf.EnableMonitor {
 		metrics.Enable()
@@ -129,7 +135,7 @@ func NewTss(
 
 // Start Tss server
 func (t *TssServer) Start() error {
-	log.Info().Msg("Starting the TSS servers")
+	t.logger.Info().Msg("starting the tss servers")
 	return nil
 }
 
@@ -142,7 +148,21 @@ func (t *TssServer) Stop() {
 		t.logger.Error().Msgf("error in shutdown the p2p server")
 	}
 	t.partyCoordinator.Stop()
-	log.Info().Msg("The Tss and p2p server has been stopped successfully")
+	t.signatureNotifier.Stop()
+	t.logger.Info().Msg("The tss and p2p server has been stopped successfully")
+}
+
+func (t *TssServer) setJoinPartyChan(jpc chan struct{}) {
+	t.joinPartyChan = jpc
+}
+func (t *TssServer) unsetJoinPartyChan() {
+	t.joinPartyChan = nil
+}
+
+func (t *TssServer) notifyJoinPartyChan() {
+	if t.joinPartyChan != nil {
+		t.joinPartyChan <- struct{}{}
+	}
 }
 
 func (t *TssServer) requestToMsgId(request interface{}) (string, error) {
@@ -208,4 +228,22 @@ func (t *TssServer) joinParty(msgID, version string, blockHeight int64, particip
 // GetLocalPeerID return the local peer
 func (t *TssServer) GetLocalPeerID() string {
 	return t.p2pCommunication.GetLocalPeerID()
+}
+
+// GetKnownPeers return the the ID and IP address of all peers.
+func (t *TssServer) GetKnownPeers() []PeerInfo {
+	infos := []PeerInfo{}
+	host := t.p2pCommunication.GetHost()
+
+	for _, conn := range host.Network().Conns() {
+		peer := conn.RemotePeer()
+		addrs := conn.RemoteMultiaddr()
+		ip, _ := addrs.ValueForProtocol(maddr.P_IP4)
+		pi := PeerInfo{
+			ID:      peer.String(),
+			Address: ip,
+		}
+		infos = append(infos, pi)
+	}
+	return infos
 }

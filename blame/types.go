@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sync"
 
-	btss "github.com/binance-chain/tss-lib/tss"
+	btss "github.com/bnb-chain/tss-lib/tss"
 )
 
 const (
@@ -41,6 +41,7 @@ type Node struct {
 type Blame struct {
 	FailReason string `json:"fail_reason"`
 	IsUnicast  bool   `json:"is_broadcast"`
+	Round      string `json:"round"`
 	BlameNodes []Node `json:"blame_peers,omitempty"`
 	blameLock  *sync.RWMutex
 }

@@ -12,17 +12,19 @@ import (
 	"testing"
 	"time"
 
-	btsskeygen "github.com/binance-chain/tss-lib/ecdsa/keygen"
-	btss "github.com/binance-chain/tss-lib/tss"
+	btsskeygen "github.com/bnb-chain/tss-lib/ecdsa/keygen"
+	btss "github.com/bnb-chain/tss-lib/tss"
+	tcrypto "github.com/cometbft/cometbft/crypto"
+	"github.com/cometbft/cometbft/crypto/secp256k1"
 	coskey "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types/bech32/legacybech32"
-	tcrypto "github.com/tendermint/tendermint/crypto"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
-	"github.com/0xpellnetwork/go-tss/blame"
-	"github.com/0xpellnetwork/go-tss/conversion"
-	"github.com/0xpellnetwork/go-tss/messages"
-	"github.com/0xpellnetwork/go-tss/p2p"
 	. "gopkg.in/check.v1"
+
+	"github.com/btcsuite/btcd/btcec/v2"
+	"gitlab.com/thorchain/tss/go-tss/blame"
+	"gitlab.com/thorchain/tss/go-tss/conversion"
+	"gitlab.com/thorchain/tss/go-tss/messages"
+	"gitlab.com/thorchain/tss/go-tss/p2p"
 )
 
 var (
@@ -71,7 +73,7 @@ func (t *TssTestSuite) TestGetThreshold(c *C) {
 
 func (t *TssTestSuite) TestMsgToHashInt(c *C) {
 	input := []byte("whatever")
-	result, err := MsgToHashInt(input)
+	result, err := MsgToHashInt(input, ECDSA)
 	c.Assert(err, IsNil)
 	c.Assert(result, NotNil)
 }
@@ -196,7 +198,7 @@ func setupProcessVerMsgEnv(c *C, privKey tcrypto.PrivKey, keyPool []string, part
 	partyIDMap := conversion.SetupPartyIDMap(partiesID)
 	conversion.SetupIDMaps(partyIDMap, tssCommonStruct.PartyIDtoP2PID)
 	ctx := btss.NewPeerContext(partiesID)
-	params := btss.NewParameters(ctx, localPartyID, len(partiesID), 2)
+	params := btss.NewParameters(btcec.S256(), ctx, localPartyID, len(partiesID), 2)
 	outCh := make(chan btss.Message, len(partiesID))
 	endCh := make(chan btsskeygen.LocalPartySaveData, len(partiesID))
 	keyGenParty := btsskeygen.NewLocalParty(params, outCh, endCh)
@@ -417,7 +419,7 @@ func (t *TssTestSuite) TestTssCommon(c *C) {
 	go func() {
 		tssCommon.ProcessInboundMessages(stopchan, &wg)
 	}()
-	bi, err := MsgToHashInt([]byte("whatever"))
+	bi, err := MsgToHashInt([]byte("whatever"), ECDSA)
 	c.Assert(err, IsNil)
 	wrapMsg, _ := fabricateTssMsg(c, sk, btss.NewPartyID("1,", "test", bi), "roundInfo", "message", "123", messages.TSSKeyGenMsg)
 	buf, err := json.Marshal(wrapMsg)
