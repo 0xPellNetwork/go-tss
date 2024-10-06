@@ -11,7 +11,7 @@ import (
 
 	. "gopkg.in/check.v1"
 
-	"github.com/0xPellNetwork/go-tss/keygen"
+	"github.com/0xpellnetwork/go-tss/keygen"
 )
 
 func TestPackage(t *testing.T) { TestingT(t) }

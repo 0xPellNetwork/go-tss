@@ -1,8 +1,8 @@
 package tss
 
 import (
-	"github.com/0xPellNetwork/go-tss/keygen"
-	"github.com/0xPellNetwork/go-tss/keysign"
+	"github.com/0xpellnetwork/go-tss/keygen"
+	"github.com/0xpellnetwork/go-tss/keysign"
 )
 
 // Server define the necessary functionality should be provide by a TSS Server implementation

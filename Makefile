@@ -1,4 +1,4 @@
-module = github.com/0xPellNetwork/go-tss
+module = github.com/0xpellnetwork/go-tss
 
 .PHONY: clear tools install test test-watch lint-pre lint lint-verbose protob build docker-gitlab-login docker-gitlab-push docker-gitlab-build
 

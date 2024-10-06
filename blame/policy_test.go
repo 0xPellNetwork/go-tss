@@ -8,8 +8,8 @@ import (
 	bkg "github.com/binance-chain/tss-lib/ecdsa/keygen"
 	btss "github.com/binance-chain/tss-lib/tss"
 	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/0xPellNetwork/go-tss/conversion"
-	"github.com/0xPellNetwork/go-tss/messages"
+	"github.com/0xpellnetwork/go-tss/conversion"
+	"github.com/0xpellnetwork/go-tss/messages"
 	. "gopkg.in/check.v1"
 )
 

@@ -17,10 +17,10 @@ import (
 
 	btsskeygen "github.com/binance-chain/tss-lib/ecdsa/keygen"
 	maddr "github.com/multiformats/go-multiaddr"
-	"github.com/0xPellNetwork/go-tss/common"
-	"github.com/0xPellNetwork/go-tss/conversion"
-	"github.com/0xPellNetwork/go-tss/keygen"
-	"github.com/0xPellNetwork/go-tss/keysign"
+	"github.com/0xpellnetwork/go-tss/common"
+	"github.com/0xpellnetwork/go-tss/conversion"
+	"github.com/0xpellnetwork/go-tss/keygen"
+	"github.com/0xpellnetwork/go-tss/keysign"
 	. "gopkg.in/check.v1"
 )
 

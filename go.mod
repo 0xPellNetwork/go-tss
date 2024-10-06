@@ -1,4 +1,4 @@
-module github.com/0xPellNetwork/go-tss
+module github.com/0xpellnetwork/go-tss
 
 go 1.17
 

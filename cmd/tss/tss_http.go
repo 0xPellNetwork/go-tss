@@ -13,9 +13,9 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/0xPellNetwork/go-tss/keygen"
-	"github.com/0xPellNetwork/go-tss/keysign"
-	"github.com/0xPellNetwork/go-tss/tss"
+	"github.com/0xpellnetwork/go-tss/keygen"
+	"github.com/0xpellnetwork/go-tss/keysign"
+	"github.com/0xpellnetwork/go-tss/tss"
 )
 
 // TssHttpServer provide http endpoint for tss server

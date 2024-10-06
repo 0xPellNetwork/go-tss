@@ -1,8 +1,8 @@
 package keysign
 
 import (
-	"github.com/0xPellNetwork/go-tss/blame"
-	"github.com/0xPellNetwork/go-tss/common"
+	"github.com/0xpellnetwork/go-tss/blame"
+	"github.com/0xpellnetwork/go-tss/common"
 )
 
 // signature

@@ -16,8 +16,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/0xPellNetwork/go-tss/messages"
-	"github.com/0xPellNetwork/go-tss/p2p"
+	"github.com/0xpellnetwork/go-tss/messages"
+	"github.com/0xpellnetwork/go-tss/p2p"
 )
 
 var signatureNotifierProtocol protocol.ID = "/p2p/signatureNotifier"

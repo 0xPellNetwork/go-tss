@@ -13,12 +13,12 @@ import (
 	"github.com/rs/zerolog/log"
 	tcrypto "github.com/tendermint/tendermint/crypto"
 
-	"github.com/0xPellNetwork/go-tss/blame"
-	"github.com/0xPellNetwork/go-tss/common"
-	"github.com/0xPellNetwork/go-tss/conversion"
-	"github.com/0xPellNetwork/go-tss/messages"
-	"github.com/0xPellNetwork/go-tss/p2p"
-	"github.com/0xPellNetwork/go-tss/storage"
+	"github.com/0xpellnetwork/go-tss/blame"
+	"github.com/0xpellnetwork/go-tss/common"
+	"github.com/0xpellnetwork/go-tss/conversion"
+	"github.com/0xpellnetwork/go-tss/messages"
+	"github.com/0xpellnetwork/go-tss/p2p"
+	"github.com/0xpellnetwork/go-tss/storage"
 )
 
 type TssKeyGen struct {

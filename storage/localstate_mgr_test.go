@@ -11,8 +11,8 @@ import (
 	tnet "github.com/libp2p/go-libp2p-testing/net"
 	"github.com/libp2p/go-libp2p/core/peer"
 	maddr "github.com/multiformats/go-multiaddr"
-	"github.com/0xPellNetwork/go-tss/conversion"
-	"github.com/0xPellNetwork/go-tss/p2p"
+	"github.com/0xpellnetwork/go-tss/conversion"
+	"github.com/0xpellnetwork/go-tss/p2p"
 	. "gopkg.in/check.v1"
 )
 

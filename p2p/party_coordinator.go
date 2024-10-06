@@ -15,8 +15,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/0xPellNetwork/go-tss/conversion"
-	"github.com/0xPellNetwork/go-tss/messages"
+	"github.com/0xpellnetwork/go-tss/conversion"
+	"github.com/0xpellnetwork/go-tss/messages"
 )
 
 var (

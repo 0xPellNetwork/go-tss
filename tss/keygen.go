@@ -3,11 +3,11 @@ package tss
 import (
 	"time"
 
-	"github.com/0xPellNetwork/go-tss/blame"
-	"github.com/0xPellNetwork/go-tss/common"
-	"github.com/0xPellNetwork/go-tss/conversion"
-	"github.com/0xPellNetwork/go-tss/keygen"
-	"github.com/0xPellNetwork/go-tss/messages"
+	"github.com/0xpellnetwork/go-tss/blame"
+	"github.com/0xpellnetwork/go-tss/common"
+	"github.com/0xpellnetwork/go-tss/conversion"
+	"github.com/0xpellnetwork/go-tss/keygen"
+	"github.com/0xpellnetwork/go-tss/messages"
 )
 
 func (t *TssServer) Keygen(req keygen.Request) (keygen.Response, error) {

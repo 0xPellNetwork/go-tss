@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/0xPellNetwork/go-tss/messages";
+option go_package = "github.com/0xpellnetwork/go-tss/messages";
 
 package messages;
 

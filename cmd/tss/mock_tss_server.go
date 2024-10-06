@@ -3,11 +3,11 @@ package main
 import (
 	"errors"
 
-	"github.com/0xPellNetwork/go-tss/blame"
-	"github.com/0xPellNetwork/go-tss/common"
-	"github.com/0xPellNetwork/go-tss/conversion"
-	"github.com/0xPellNetwork/go-tss/keygen"
-	"github.com/0xPellNetwork/go-tss/keysign"
+	"github.com/0xpellnetwork/go-tss/blame"
+	"github.com/0xpellnetwork/go-tss/common"
+	"github.com/0xpellnetwork/go-tss/conversion"
+	"github.com/0xpellnetwork/go-tss/keygen"
+	"github.com/0xpellnetwork/go-tss/keysign"
 )
 
 type MockTssServer struct {

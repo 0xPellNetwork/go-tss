@@ -3,7 +3,7 @@ package common
 import (
 	"sync"
 
-	"github.com/0xPellNetwork/go-tss/messages"
+	"github.com/0xpellnetwork/go-tss/messages"
 )
 
 // LocalCacheItem used to cache the unconfirmed broadcast message

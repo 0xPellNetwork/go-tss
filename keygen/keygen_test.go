@@ -23,11 +23,11 @@ import (
 	btss "github.com/binance-chain/tss-lib/tss"
 	"github.com/ipfs/go-log"
 	maddr "github.com/multiformats/go-multiaddr"
-	"github.com/0xPellNetwork/go-tss/common"
-	"github.com/0xPellNetwork/go-tss/conversion"
-	"github.com/0xPellNetwork/go-tss/messages"
-	"github.com/0xPellNetwork/go-tss/p2p"
-	"github.com/0xPellNetwork/go-tss/storage"
+	"github.com/0xpellnetwork/go-tss/common"
+	"github.com/0xpellnetwork/go-tss/conversion"
+	"github.com/0xpellnetwork/go-tss/messages"
+	"github.com/0xpellnetwork/go-tss/p2p"
+	"github.com/0xpellnetwork/go-tss/storage"
 	. "gopkg.in/check.v1"
 )
 
