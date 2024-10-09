@@ -221,8 +221,7 @@ require (
 replace (
 	github.com/agl/ed25519 => github.com/binance-chain/edwards25519 v0.0.0-20200305024217-f36fc4b53d43
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.2-alpha.regen.4
-	github.com/libp2p/go-libp2p => github.com/0xpellnetwork/go-libp2p v0.0.0-20241006111410-dfaadb9c2ea8
+	github.com/libp2p/go-libp2p => github.com/0xpellnetwork/go-libp2p v0.0.0-20241006031157-57bab5636df6
 )
 
-// which is a fork of https://github.com/threshold-network/tss-lib
-replace github.com/bnb-chain/tss-lib => github.com/0xpellnetwork/tss-lib v0.0.0-20241006113010-81eed52282fe
+replace github.com/bnb-chain/tss-lib => github.com/0xpellnetwork/tss-lib v0.0.0-20241006033708-d3656e40130b
