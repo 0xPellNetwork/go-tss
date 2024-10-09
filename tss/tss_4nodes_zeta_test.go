@@ -23,7 +23,7 @@ import (
 	"gitlab.com/thorchain/tss/go-tss/keysign"
 )
 
-type FourNodeScalePellSuite struct {
+type FourNodeScaleZetaSuite struct {
 	servers       []*TssServer
 	ports         []int
 	preParams     []*btsskeygen.LocalPreParams
@@ -33,14 +33,14 @@ type FourNodeScalePellSuite struct {
 	tmpDir        string
 }
 
-// Run with go test -v -gocheck.vv -gocheck.f FourNodeScalePellSuite .
-var _ = Suite(&FourNodeScalePellSuite{})
+// Run with go test -v -gocheck.vv -gocheck.f FourNodeScaleZetaSuite .
+var _ = Suite(&FourNodeScaleZetaSuite{})
 
 // setup four nodes for test
-func (s *FourNodeScalePellSuite) SetUpSuite(c *C) {
-	common.InitLog("info", true, "four_nodes_pell_test")
+func (s *FourNodeScaleZetaSuite) SetUpSuite(c *C) {
+	common.InitLog("info", true, "four_nodes_zeta_test")
 	conversion.SetupBech32Prefix()
-	s.tmpDir = path.Join(os.TempDir(), "4nodes_pell_test")
+	s.tmpDir = path.Join(os.TempDir(), "4nodes_zeta_test")
 	os.RemoveAll(s.tmpDir)
 	s.ports = []int{
 		17666, 17667, 17668, 17669,
@@ -77,7 +77,7 @@ func (s *FourNodeScalePellSuite) SetUpSuite(c *C) {
 	s.doTestKeygen(c, newJoinPartyVersion)
 }
 
-func (s *FourNodeScalePellSuite) TestManyKeysigns(c *C) {
+func (s *FourNodeScaleZetaSuite) TestManyKeysigns(c *C) {
 	for i := 0; i < 50; i++ {
 		c.Logf("Keysigning round %d started", i)
 		startTime := time.Now()
@@ -90,7 +90,7 @@ func (s *FourNodeScalePellSuite) TestManyKeysigns(c *C) {
 //
 // keysigns do not wait for the prior keysign to finish unlike TestManyKeysigns
 // keysigns are also submitted in reverse order to slow down keysigning
-func (s *FourNodeScalePellSuite) TestConcurrentKeysigns(c *C) {
+func (s *FourNodeScaleZetaSuite) TestConcurrentKeysigns(c *C) {
 	for i := 0; i < 10; i++ {
 		c.Logf("Concurrent keysign round %d started", i)
 		s.doTestConcurrentKeySign(c, newJoinPartyVersion)
@@ -99,7 +99,7 @@ func (s *FourNodeScalePellSuite) TestConcurrentKeysigns(c *C) {
 }
 
 // generate a new key
-func (s *FourNodeScalePellSuite) doTestKeygen(c *C, version string) {
+func (s *FourNodeScaleZetaSuite) doTestKeygen(c *C, version string) {
 	wg := sync.WaitGroup{}
 	lock := &sync.Mutex{}
 	keygenResult := make(map[int]keygen.Response)
@@ -146,7 +146,7 @@ func genMessages() []string {
 }
 
 // test key signing
-func (s *FourNodeScalePellSuite) doTestKeySign(c *C, version string) {
+func (s *FourNodeScaleZetaSuite) doTestKeySign(c *C, version string) {
 	wg := sync.WaitGroup{}
 	lock := &sync.Mutex{}
 
@@ -168,7 +168,7 @@ func (s *FourNodeScalePellSuite) doTestKeySign(c *C, version string) {
 	checkSignResult(c, keysignResult)
 }
 
-func (s *FourNodeScalePellSuite) doTestConcurrentKeySign(c *C, version string) {
+func (s *FourNodeScaleZetaSuite) doTestConcurrentKeySign(c *C, version string) {
 	// if this increases to 15, the tests will start to fail
 	// it needs to be set quite low in CI since there are less CPUs
 	numMessages := runtime.NumCPU()
@@ -209,7 +209,7 @@ func (s *FourNodeScalePellSuite) doTestConcurrentKeySign(c *C, version string) {
 	}
 }
 
-func (s *FourNodeScalePellSuite) TearDownSuite(c *C) {
+func (s *FourNodeScaleZetaSuite) TearDownSuite(c *C) {
 	// give a second before we shutdown the network
 	time.Sleep(time.Second)
 	for i := 0; i < partyNum; i++ {
@@ -218,7 +218,7 @@ func (s *FourNodeScalePellSuite) TearDownSuite(c *C) {
 	os.RemoveAll(s.tmpDir)
 }
 
-func (s *FourNodeScalePellSuite) getTssServer(c *C, index int, conf common.TssConfig, bootstrap string) *TssServer {
+func (s *FourNodeScaleZetaSuite) getTssServer(c *C, index int, conf common.TssConfig, bootstrap string) *TssServer {
 	priKey, err := conversion.GetPriKey(testPriKeyArr[index])
 	c.Assert(err, IsNil)
 	baseHome := path.Join(s.tmpDir, strconv.Itoa(index))
@@ -234,7 +234,7 @@ func (s *FourNodeScalePellSuite) getTssServer(c *C, index int, conf common.TssCo
 	} else {
 		peerIDs = nil
 	}
-	instance, err := NewTss(peerIDs, s.ports[index], priKey, "Pell", baseHome, conf, s.preParams[index], "", "password")
+	instance, err := NewTss(peerIDs, s.ports[index], priKey, "Zeta", baseHome, conf, s.preParams[index], "", "password")
 	c.Assert(err, IsNil)
 	return instance
 }
