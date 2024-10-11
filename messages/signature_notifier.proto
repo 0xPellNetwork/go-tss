@@ -4,12 +4,12 @@ option go_package = "gitlab.com/thorchain/tss/go-tss/messages";
 package messages;
 
 message KeysignSignature {
-    enum Status {
-        Unknown = 0;
-        Success = 1;
-        Failed = 2;
-    }
-    string ID = 1; // the unique message id
-    repeated bytes Signatures= 2;
-    Status KeysignStatus = 3;
+  enum Status {
+    Unknown = 0;
+    Success = 1;
+    Failed = 2;
+  }
+  string ID = 1; // the unique message id
+  repeated bytes Signatures = 2;
+  Status KeysignStatus = 3;
 }
