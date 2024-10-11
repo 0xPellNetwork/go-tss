@@ -15,12 +15,12 @@ import (
 	"testing"
 	"time"
 
-	btsskeygen "github.com/binance-chain/tss-lib/ecdsa/keygen"
-	maddr "github.com/multiformats/go-multiaddr"
 	"github.com/0xpellnetwork/go-tss/common"
 	"github.com/0xpellnetwork/go-tss/conversion"
 	"github.com/0xpellnetwork/go-tss/keygen"
 	"github.com/0xpellnetwork/go-tss/keysign"
+	btsskeygen "github.com/binance-chain/tss-lib/ecdsa/keygen"
+	maddr "github.com/multiformats/go-multiaddr"
 	. "gopkg.in/check.v1"
 )
 
@@ -354,7 +354,7 @@ func (s *FourNodeTestSuite) getTssServer(c *C, index int, conf common.TssConfig,
 	} else {
 		peerIDs = nil
 	}
-	instance, err := NewTss(peerIDs, s.ports[index], priKey, "Asgard", baseHome, conf, s.preParams[index], "")
+	instance, err := NewTss(peerIDs, s.ports[index], priKey, "Asgard", baseHome, conf, s.preParams[index], "", "password")
 	c.Assert(err, IsNil)
 	return instance
 }

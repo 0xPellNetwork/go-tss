@@ -67,6 +67,7 @@ func main() {
 		tssConf,
 		nil,
 		p2pConf.ExternalIP,
+		"password",
 	)
 	if nil != err {
 		log.Fatal(err)

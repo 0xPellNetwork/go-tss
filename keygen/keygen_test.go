@@ -19,15 +19,15 @@ import (
 	tcrypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
-	btsskeygen "github.com/binance-chain/tss-lib/ecdsa/keygen"
-	btss "github.com/binance-chain/tss-lib/tss"
-	"github.com/ipfs/go-log"
-	maddr "github.com/multiformats/go-multiaddr"
 	"github.com/0xpellnetwork/go-tss/common"
 	"github.com/0xpellnetwork/go-tss/conversion"
 	"github.com/0xpellnetwork/go-tss/messages"
 	"github.com/0xpellnetwork/go-tss/p2p"
 	"github.com/0xpellnetwork/go-tss/storage"
+	btsskeygen "github.com/binance-chain/tss-lib/ecdsa/keygen"
+	btss "github.com/binance-chain/tss-lib/tss"
+	"github.com/ipfs/go-log"
+	maddr "github.com/multiformats/go-multiaddr"
 	. "gopkg.in/check.v1"
 )
 
@@ -129,7 +129,7 @@ func (s *TssKeygenTestSuite) SetUpTest(c *C) {
 
 	for i := 0; i < s.partyNum; i++ {
 		baseHome := path.Join(os.TempDir(), strconv.Itoa(i))
-		fMgr, err := storage.NewFileStateMgr(baseHome)
+		fMgr, err := storage.NewFileStateMgr(baseHome, "password")
 		c.Assert(err, IsNil)
 		s.stateMgrs[i] = fMgr
 	}
