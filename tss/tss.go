@@ -8,12 +8,12 @@ import (
 	"sync"
 
 	bkeygen "github.com/binance-chain/tss-lib/ecdsa/keygen"
+	tcrypto "github.com/cometbft/cometbft/crypto"
 	coskey "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types/bech32/legacybech32"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	tcrypto "github.com/tendermint/tendermint/crypto"
 
 	"gitlab.com/thorchain/tss/go-tss/common"
 	"gitlab.com/thorchain/tss/go-tss/conversion"

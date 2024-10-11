@@ -22,10 +22,10 @@ import (
 
 	"gitlab.com/thorchain/tss/go-tss/conversion"
 
+	tcrypto "github.com/cometbft/cometbft/crypto"
+	"github.com/cometbft/cometbft/crypto/secp256k1"
 	"github.com/ipfs/go-log"
 	"github.com/libp2p/go-libp2p/core/peer"
-	tcrypto "github.com/tendermint/tendermint/crypto"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"gitlab.com/thorchain/tss/go-tss/common"
 	"gitlab.com/thorchain/tss/go-tss/messages"
 	"gitlab.com/thorchain/tss/go-tss/p2p"
