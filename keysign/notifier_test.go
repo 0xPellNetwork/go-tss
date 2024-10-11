@@ -7,8 +7,8 @@ import (
 
 	tsslibcommon "github.com/binance-chain/tss-lib/common"
 	"github.com/binance-chain/tss-lib/ecdsa/signing"
-	"github.com/0xpellnetwork/go-tss/common"
-	"github.com/0xpellnetwork/go-tss/conversion"
+	"gitlab.com/thorchain/tss/go-tss/common"
+	"gitlab.com/thorchain/tss/go-tss/conversion"
 	. "gopkg.in/check.v1"
 )
 

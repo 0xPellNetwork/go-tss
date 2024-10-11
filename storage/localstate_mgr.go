@@ -20,8 +20,8 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	maddr "github.com/multiformats/go-multiaddr"
 
-	"github.com/0xpellnetwork/go-tss/conversion"
-	"github.com/0xpellnetwork/go-tss/p2p"
+	"gitlab.com/thorchain/tss/go-tss/conversion"
+	"gitlab.com/thorchain/tss/go-tss/p2p"
 )
 
 const keyFragmentSeed = "TSS_FRAGMENT_SEED"

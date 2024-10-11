@@ -1,4 +1,4 @@
-module github.com/0xpellnetwork/go-tss
+module gitlab.com/thorchain/tss/go-tss
 
 go 1.23
 

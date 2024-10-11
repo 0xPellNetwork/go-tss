@@ -22,8 +22,8 @@ import (
 	"github.com/rs/zerolog/log"
 	tcrypto "github.com/tendermint/tendermint/crypto"
 
-	"github.com/0xpellnetwork/go-tss/blame"
-	"github.com/0xpellnetwork/go-tss/messages"
+	"gitlab.com/thorchain/tss/go-tss/blame"
+	"gitlab.com/thorchain/tss/go-tss/messages"
 )
 
 func Contains(s []*btss.PartyID, e *btss.PartyID) bool {

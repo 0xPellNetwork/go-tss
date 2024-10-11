@@ -14,10 +14,10 @@ import (
 	golog "github.com/ipfs/go-log"
 	"gitlab.com/thorchain/binance-sdk/common/types"
 
-	"github.com/0xpellnetwork/go-tss/common"
-	"github.com/0xpellnetwork/go-tss/conversion"
-	"github.com/0xpellnetwork/go-tss/p2p"
-	"github.com/0xpellnetwork/go-tss/tss"
+	"gitlab.com/thorchain/tss/go-tss/common"
+	"gitlab.com/thorchain/tss/go-tss/conversion"
+	"gitlab.com/thorchain/tss/go-tss/p2p"
+	"gitlab.com/thorchain/tss/go-tss/tss"
 )
 
 var (

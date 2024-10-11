@@ -3,7 +3,7 @@ package blame
 import (
 	. "gopkg.in/check.v1"
 
-	"github.com/0xpellnetwork/go-tss/messages"
+	"gitlab.com/thorchain/tss/go-tss/messages"
 )
 
 type RoundMgrSuite struct{}

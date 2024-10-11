@@ -1,4 +1,4 @@
-module = github.com/0xpellnetwork/go-tss
+module = gitlab.com/thorchain/tss/go-tss
 
 .PHONY: clear tools install test test-watch lint-pre lint lint-verbose protob build docker-gitlab-login docker-gitlab-push docker-gitlab-build
 
@@ -47,4 +47,4 @@ build: protob
 	go1.19.13 build ./...
 
 docker-build:
-	docker build -t registry.github.com/0xPellNetwork/go-tss .
+	docker build -t registry.gitlab.com/thorchain/tss/go-tss .
