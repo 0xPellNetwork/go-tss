@@ -19,7 +19,6 @@ import (
 	"github.com/binance-chain/tss-lib/ecdsa/keygen"
 	"github.com/libp2p/go-libp2p/core/peer"
 	maddr "github.com/multiformats/go-multiaddr"
-
 	"gitlab.com/thorchain/tss/go-tss/conversion"
 	"gitlab.com/thorchain/tss/go-tss/p2p"
 )
@@ -111,7 +110,7 @@ func (fsm *FileStateMgr) SaveLocalState(state KeygenLocalState) error {
 
 // GetLocalState read the local state from file system
 func (fsm *FileStateMgr) GetLocalState(pubKey string) (KeygenLocalState, error) {
-	if fsm.keyGen != nil {
+	if fsm.keyGen != nil && fsm.keyGen.PubKey == pubKey {
 		return *fsm.keyGen, nil
 	}
 	if len(pubKey) == 0 {
